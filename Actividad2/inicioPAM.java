@@ -25,6 +25,25 @@ public class inicioPAM {
         HORAS POR SEMANA                                         2            4
         ";
     }
+    public String TemarioDeLaAsignatura() {
+        return "
+        Temario De La Asignatura:
+        --------------------------------------------------------------------------------------
+                 UNIDAD DE APRENDIZAJE                        TEORÍA       PRÁCTICA
+        --------------------------------------------------------------------------------------
+        I. Introducción al desarrollo apps moviles              10            8
+        --------------------------------------------------------------------------------------
+        II. Diseño de aplicaciones móviles                      10           14
+        --------------------------------------------------------------------------------------
+        III.Programacion de aplicaciones moviles                12           24
+        --------------------------------------------------------------------------------------
+        IV.Publicacion de aplicaciones moviles                   4            8
+        --------------------------------------------------------------------------------------
+        HORAS POR CUATRIMESTRE                                  36           54
+        --------------------------------------------------------------------------------------
+        HORAS POR SEMANA                                         2            4
+        ";
+    }
     public String ReglamentoDPOO() {
         return "
         Reglamento de POO:
