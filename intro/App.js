@@ -1,8 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
-import ContadorScreen from './screens/ContadorScreen';
+import { StyleSheet, Text, View, Button } from 'react-native';
+import React from 'react';
+import MenuScreen from './screens/MenuScreen';
 
-export default function App() { 
-  return (
-    <ContadorScreen />
-  );
+
+export default function App()   
+{
+ 
+
+  return(
+
+      <MenuScreen/>
+    
+  );
 }
