@@ -2,7 +2,6 @@ import {StatusBar} from 'expo-status-bar';
 import {StyleSheet,Text,View, Button, Switch} from 'react-native';
 import React, {useState} from 'react';
 
-
 export default function BotonesScreen() {
 
     const [modoOscuro, setModoOscuro] = useState(false);
@@ -24,7 +23,6 @@ export default function BotonesScreen() {
                     <Button title="Botón Rojo" color="red" onPress={() => {}}/>
                     <Button title="Botón Morado" color="purple" onPress={() => {}}/>
                 </View>
-
 
                 <View style={styles.section}>
                     <Text style={[styles.subtitulo, texto]}>Switches</Text>
