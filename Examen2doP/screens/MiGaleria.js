@@ -1,19 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ImageBackground, Image, Button, StatusBar } from 'react-native';
+import { 
+  View, Text, StyleSheet, ImageBackground, Image, 
+  ScrollView, Button, StatusBar, Alert 
+} from 'react-native';
 
-import Tarjeta1 from './Tarjeta1';
-import Tarjeta2 from './Tarjeta2';
-import Tarjeta3 from './Tarjeta3';
-import Tarjeta4 from './Tarjeta4';
-import Tarjeta5 from './Tarjeta5';
-import Tarjeta6 from './Tarjeta6';
-
-const SPLASH_IMAGE = require('../assets/Recursos/SPLASH_IMAGE.jpeg');
-const LOGO_IMAGE = require('../assets/Recursos/LOGO_IMAGE.png'); 
+const SPLASH_IMAGE = require('../assets/splash.jpg');
+const IMAGES = [
+  {
+    id: 1,
+    title: 'Foto de otra foto',
+    description: 'Una hermosa vista del sol cayendo sobre el mar.',
+    fullDescription: 'Fotografía tomada en la costa del Pacífico.',
+    image: require('../assets/foto1.jpg'),
+  },
+  {
+    id: 2,
+    title: 'Playa de noche',
+    description: 'Playa de noche con luna enorme.',
+    fullDescription: 'Playa con mar paficico y la luna.',
+    image: require('../assets/foto2.jpg'),
+  },
+  {
+    id: 3,
+    title: 'Sombrilla de playa',
+    description: 'Sombrilla de playa en la playa.',
+    fullDescription: 'Sombrilla de playa en la playa y mar de fondo.',
+    image: require('../assets/foto3.jpg'),
+  },
+  {
+    id: 4,
+    title: 'Foto de una pareja',
+    description: 'Foto de una pareja besandose.',
+    fullDescription: 'Foto de una pareja besandose y un cultivo de fondo.',
+    image: require('../assets/foto4.jpg'),
+  },
+  {
+    id: 5,
+    title: 'Galaxia',
+    description: 'Foto de el espacio exterior.',
+    fullDescription: 'Foto de el espacio exterior y las estrellas.',
+    image: require('../assets/foto5.jpg'),
+  },
+  {
+    id: 6,
+    title: 'Foto de una chica',
+    description: 'Foto de una chica con naturaleza de fondo.',
+    fullDescription: 'oto de una chica con naturaleza de fondo.',
+    image: require('../assets/foto6.jpg'),
+  },
+];
 
 export default function MiGaleria() {
   const [isLoading, setIsLoading] = useState(true);
-  const [screen, setScreen] = useState('MiGaleria');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
@@ -24,46 +62,42 @@ export default function MiGaleria() {
     return (
       <ImageBackground
         source={SPLASH_IMAGE}
-        resizeMode="stretch"
+        resizeMode="cover"
         style={styles.splashBackground}
-        imageStyle={styles.splashImageStyle}
       >
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <View style={styles.splashOverlay}>
-          <Image source={LOGO_IMAGE} style={styles.logo} resizeMode="contain" />
           <Text style={styles.splashTitle}>Mi Galería</Text>
-          <Text style={styles.splashSubtitle}>Iniciando aplicación...</Text>
+          <Text style={styles.splashSubtitle}>Cargando tus fotos...</Text>
         </View>
       </ImageBackground>
     );
   }
 
-  switch (screen) {
-    case 'Tarjeta1':
-      return <Tarjeta1 onBack={() => setScreen('MiGaleria')} />;
-    case 'Tarjeta2':
-      return <Tarjeta2 onBack={() => setScreen('MiGaleria')} />;
-    case 'Tarjeta3':
-      return <Tarjeta3 onBack={() => setScreen('MiGaleria')} />;
-    case 'Tarjeta4':
-      return <Tarjeta4 onBack={() => setScreen('MiGaleria')} />;
-    case 'Tarjeta5':
-      return <Tarjeta5 onBack={() => setScreen('MiGaleria')} />;
-    case 'Tarjeta6':
-      return <Tarjeta6 onBack={() => setScreen('MiGaleria')} />;
-    default:
-      return (
-        <View style={styles.container}>
-          <Text style={{ fontSize: 24, color: '#fff', marginBottom: 20 }}>Mi Galería</Text>
-          <Button title="Tarjeta 1" onPress={() => setScreen('Tarjeta1')} />
-          <Button title="Tarjeta 2" onPress={() => setScreen('Tarjeta2')} />
-          <Button title="Tarjeta 3" onPress={() => setScreen('Tarjeta3')} />
-          <Button title="Tarjeta 4" onPress={() => setScreen('Tarjeta4')} />
-          <Button title="Tarjeta 5" onPress={() => setScreen('Tarjeta5')} />
-          <Button title="Tarjeta 6" onPress={() => setScreen('Tarjeta6')} />
-        </View>
-      );
-  }
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Mi Galería</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {IMAGES.map((item) => (
+          <View key={item.id} style={styles.card}>
+            <ImageBackground source={item.image} style={styles.image} imageStyle={styles.imageStyle}>
+              <View style={styles.overlay}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.description}>{item.description}</Text>
+                <Button
+                  title="Ver detalles"
+                  onPress={() =>
+                    Alert.alert(item.title, item.fullDescription, [{ text: 'Cerrar' }])
+                  }
+                  color="#2b6cb0"
+                />
+              </View>
+            </ImageBackground>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -72,34 +106,73 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  splashImageStyle: {
-    opacity: 0.85,
-  },
   splashOverlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    padding: 24,
-    borderRadius: 12,
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 30,
+    borderRadius: 20,
   },
   splashTitle: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: '700',
+    color: 'white',
+    fontSize: 30,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   splashSubtitle: {
     color: '#dbeafe',
+    textAlign: 'center',
     marginTop: 8,
   },
+
+  // Galería
   container: {
     flex: 1,
-    backgroundColor: '#4f9b91ff',
+    backgroundColor: '#e0f2f1',
+    paddingTop: 40,
+  },
+  header: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#0d9488',
+  },
+  scrollContainer: {
+    padding: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+  },
+  card: {
+    width: '90%',
+    marginBottom: 20,
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    backgroundColor: '#fff',
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'flex-end',
+  },
+  imageStyle: {
+    borderRadius: 15,
+  },
+  overlay: {
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    padding: 15,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  description: {
+    color: '#e0f2fe',
+    marginVertical: 5,
   },
 });
