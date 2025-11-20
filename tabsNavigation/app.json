@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "StackNavigation",
-    "slug": "StackNavigation",
+    "name": "tabsNavigation",
+    "slug": "tabsNavigation",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "stacknavigation",
+    "scheme": "tabsnavigation",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -39,9 +39,12 @@
         }
       ]
     ],
+
     "experiments": {
-      "typedRoutes": true,
+      "typedRoutes": false,
       "reactCompiler": true
-    }
+    },
+
+    "entryPoint": "./App.js"
   }
 }
