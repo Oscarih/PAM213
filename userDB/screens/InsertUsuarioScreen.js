@@ -10,14 +10,14 @@ export default function UsuarioView() {
   const [nombre, setNombre] = useState('');
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  
+  const [modoEdicion, setModoEdicion] = useState(null); 
 
-  // SELECT - Cargar usuarios desde la BD
   const cargarUsuarios = useCallback(async () => {
     try {
       setLoading(true);
       const data = await controller.obtenerUsuarios();
       setUsuarios(data);
-      console.log(`${data.length} usuarios cargados`);
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
@@ -25,7 +25,6 @@ export default function UsuarioView() {
     }
   }, []);
 
-  // Inicializar y cargar datos
   useEffect(() => {
     const init = async () => {
       await controller.initialize();
@@ -33,7 +32,6 @@ export default function UsuarioView() {
     };
 
     init();
-    // avisar los cambios automáticos
     controller.addListener(cargarUsuarios);
 
     return () => {
@@ -41,14 +39,28 @@ export default function UsuarioView() {
     };
   }, [cargarUsuarios]);
 
-  // INSERT - Agregar nuevo usuario
-  const handleAgregar = async () => {
-
+  const handleGuardar = async () => {
     if (guardando) return;
+    
+    if (!nombre.trim()) {
+        Alert.alert('Error', 'Por favor escribe un nombre');
+        return;
+    }
+
     try {
       setGuardando(true);
-      const usuarioCreado = await controller.crearUsuario(nombre);
-      Alert.alert(' Usuario Creado', `"${usuarioCreado.nombre}" guardado con ID: ${usuarioCreado.id}`);
+      
+      if (modoEdicion) {
+        // --- MODO ACTUALIZAR ---
+        await controller.actualizarUsuario(modoEdicion, nombre);
+        Alert.alert('Éxito', 'Usuario actualizado correctamente');
+        setModoEdicion(null); // Salimos del modo edición
+      } else {
+        // --- MODO INSERTAR ---
+        await controller.crearUsuario(nombre);
+        Alert.alert('Usuario Creado', 'El usuario se guardó correctamente');
+      }
+      
       setNombre('');
     }
     catch (error) {
@@ -59,41 +71,85 @@ export default function UsuarioView() {
     }
   };
 
-  // Renderizar cada usuario
+  // NUEVO: Preparar edición (subir nombre al input)
+  const prepararEdicion = (usuario) => {
+    setNombre(usuario.nombre);
+    setModoEdicion(usuario.id);
+  };
+
+  // NUEVO: Cancelar edición
+  const cancelarEdicion = () => {
+    setModoEdicion(null);
+    setNombre('');
+  };
+
+  // NUEVO: Eliminar usuario
+  const handleEliminar = (id) => {
+    Alert.alert(
+      "Eliminar Usuario",
+      "¿Estás seguro que deseas eliminar este usuario?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await controller.eliminarUsuario(id);
+            } catch (error) {
+              Alert.alert('Error', error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Renderizar cada usuario (AHORA CON BOTONES)
   const renderUsuario = ({ item, index }) => (
     <View style={styles.userItem}>
-      <View style={styles.userNumber}>
-        <Text style={styles.userNumberText}>{index + 1}</Text>
+      <View style={styles.userInfoContainer}>
+        <View style={styles.userNumber}>
+          <Text style={styles.userNumberText}>{index + 1}</Text>
+        </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{item.nombre}</Text>
+          <Text style={styles.userDate}>ID: {item.id}</Text>
+          <Text style={styles.userDate}>
+            {new Date(item.fechaCreacion).toLocaleDateString('es-MX', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            })}
+          </Text>
+        </View>
       </View>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.nombre}</Text>
-        <Text style={styles.userId}>ID: {item.id}</Text>
-        <Text style={styles.userDate}>
-          {new Date(item.fechaCreacion).toLocaleDateString('es-MX', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </Text>
+      
+      {/* NUEVO: Botones de Editar y Eliminar */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity onPress={() => prepararEdicion(item)} style={styles.editButton}>
+          <Text style={styles.actionText}>Editar</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => handleEliminar(item.id)} style={styles.deleteButton}>
+          <Text style={styles.actionTextDelete}>X</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    
     <View style={styles.container}>
 
       {/* Zona del encabezado */}
-
-      <Text style={styles.title}> INSERT & SELECT</Text>
+      <Text style={styles.title}>Update y Delete - Práctica 20</Text>
       <Text style={styles.subtitle}>
         {Platform.OS === 'web' ? ' WEB (LocalStorage)' : ` ${Platform.OS.toUpperCase()} (SQLite)`}
       </Text>
 
-      {/* Zona del INSERT */}
-
+      {/* Zona del INPUT (Cambia dinámicamente) */}
       <View style={styles.insertSection}>
-        <Text style={styles.sectionTitle}> Insertar Usuario</Text>
+        <Text style={styles.sectionTitle}>
+            {modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario'}
+        </Text>
         
         <TextInput
           style={styles.input}
@@ -103,35 +159,36 @@ export default function UsuarioView() {
           editable={!guardando}
         />
 
-        <TouchableOpacity 
-          style={[styles.button, guardando && styles.buttonDisabled]} 
-          onPress={handleAgregar}
-          disabled={guardando} >
+        <View style={{flexDirection: 'row', gap: 10}}>
+            <TouchableOpacity 
+                style={[styles.button, guardando && styles.buttonDisabled, {flex: 1}]} 
+                onPress={handleGuardar} 
+                disabled={guardando}>
+                <Text style={styles.buttonText}>
+                    {guardando ? 'Procesando...' : (modoEdicion ? 'Actualizar' : 'Agregar')}
+                </Text>
+            </TouchableOpacity>
 
-          <Text style={styles.buttonText}>
-            {guardando ? ' Guardando...' : 'Agregar Usuario'}
-          </Text>
-
-        </TouchableOpacity>
-
+            {/* Botón cancelar solo aparece si editamos */}
+            {modoEdicion && (
+                <TouchableOpacity 
+                    style={styles.buttonCancel} 
+                    onPress={cancelarEdicion}>
+                    <Text style={styles.buttonText}>Cancelar</Text>
+                </TouchableOpacity>
+            )}
+        </View>
       </View>
 
-
-
-      {/* Zona del SELECT */}
-
+      {/* Zona de la LISTA */}
       <View style={styles.selectSection}>
-
         <View style={styles.selectHeader}>
-
           <Text style={styles.sectionTitle}>Lista de Usuarios</Text>
-
           <TouchableOpacity 
             style={styles.refreshButton}
-            onPress={cargarUsuarios} >
+            onPress={cargarUsuarios}>
             <Text style={styles.refreshText}>Recargar</Text>
           </TouchableOpacity>
-
         </View>
 
         {loading ? (
@@ -139,206 +196,58 @@ export default function UsuarioView() {
             <ActivityIndicator size="large" color="#007AFF" />
             <Text style={styles.loadingText}>Cargando usuarios...</Text>
           </View>
-           ) : (
+        ) : (
           <FlatList
             data={usuarios}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderUsuario}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}> No hay usuarios</Text>
+                <Text style={styles.emptyText}>No hay usuarios</Text>
                 <Text style={styles.emptySubtext}>Agrega el primero arriba</Text>
               </View>
             }
-            contentContainerStyle={usuarios.length === 0 && styles.emptyList}
           />
         )}
-
-
       </View>
-
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    paddingTop: 50,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#333',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  insertSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  selectSection: {
-    flex: 1,
-    backgroundColor: '#fff',
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 12,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 12,
-    fontSize: 16,
-    backgroundColor: '#fafafa',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  selectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  refreshButton: {
-    padding: 8,
-  },
-  refreshText: {
-    color: '#007AFF',
-    fontSize: 14,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 14,
-  },
-  userItem: {
-    flexDirection: 'row',
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
-  },
-  userNumber: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  userNumberText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  userId: {
-    fontSize: 12,
-    color: '#007AFF',
-    marginBottom: 2,
-  },
-  userDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyList: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: 18,
-    color: '#999',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#bbb',
-  },
-  mvcInfo: {
-    backgroundColor: '#e3f2fd',
-    padding: 15,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
-  },
-  mvcTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1976D2',
-    marginBottom: 8,
-  },
-  mvcText: {
-    fontSize: 12,
-    color: '#555',
-    lineHeight: 18,
-  },
-  bold: {
-    fontWeight: 'bold',
-    color: '#1976D2',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5', paddingTop: 50 },
+  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', color: '#333', marginBottom: 5 },
+  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20 },
+  insertSection: { backgroundColor: '#fff', padding: 20, marginHorizontal: 15, marginBottom: 15, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  selectSection: { flex: 1, backgroundColor: '#fff', marginHorizontal: 15, marginBottom: 15, borderRadius: 12, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 15 },
+  input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 15, marginBottom: 12, fontSize: 16, backgroundColor: '#fafafa' },
+  button: { backgroundColor: '#007AFF', padding: 16, borderRadius: 8, alignItems: 'center' },
+  buttonCancel: { backgroundColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  buttonDisabled: { backgroundColor: '#ccc' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  selectHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  refreshButton: { padding: 8 },
+  refreshText: { color: '#007AFF', fontSize: 14 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+  loadingText: { marginTop: 10, color: '#666', fontSize: 14 },
+  
+  userItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 10, borderRadius: 8, marginBottom: 10, borderLeftWidth: 4, borderLeftColor: '#007AFF' },
+  userInfoContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  userNumber: { width: 35, height: 35, borderRadius: 17.5, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  userNumberText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  userInfo: { flex: 1 },
+  userName: { fontSize: 16, fontWeight: '600', color: '#333' },
+  userId: { fontSize: 12, color: '#007AFF' },
+  userDate: { fontSize: 12, color: '#666' },
+  
+  actionButtons: { flexDirection: 'column', gap: 5, marginLeft: 10 },
+  editButton: { backgroundColor: '#FF9500', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
+  deleteButton: { backgroundColor: '#FF3B30', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
+  actionText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  actionTextDelete: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  
+  emptyContainer: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 18, color: '#999', marginBottom: 8 },
+  emptySubtext: { fontSize: 14, color: '#bbb' },
 });

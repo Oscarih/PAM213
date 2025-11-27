@@ -6,6 +6,7 @@ class DatabaseService {
     this.db = null;
     this.storageKey = 'usuarios';
   }
+
   async initialize() {
     if (Platform.OS === 'web') {
       console.log('Usando LocalStorage para web');
@@ -21,6 +22,7 @@ class DatabaseService {
       `);
     }
   }
+
   async getAll() {
     if (Platform.OS === 'web') {
       const data = localStorage.getItem(this.storageKey);
@@ -29,6 +31,7 @@ class DatabaseService {
       return await this.db.getAllAsync('SELECT * FROM usuarios ORDER BY id DESC');
     }
   }
+
   async add(nombre) {
     if (Platform.OS === 'web') {
       const usuarios = await this.getAll();
@@ -48,11 +51,48 @@ class DatabaseService {
         'INSERT INTO usuarios(nombre) VALUES(?)',
         nombre
       );
+
       return {
         id: result.lastInsertRowId,
         nombre,
         fecha_creacion: new Date().toISOString()
       };
+    }
+  }
+
+  // --- NUEVAS FUNCIONES PARA LA PRÁCTICA 20 ---
+
+  // UPDATE - Actualizar usuario
+  async update(id, nuevoNombre) {
+    if (Platform.OS === 'web') {
+      const usuarios = await this.getAll();
+      const index = usuarios.findIndex(u => u.id === id);
+      if (index !== -1) {
+        usuarios[index].nombre = nuevoNombre;
+        localStorage.setItem(this.storageKey, JSON.stringify(usuarios));
+      }
+    } else {
+      // Usamos UPDATE de SQL
+      await this.db.runAsync(
+        'UPDATE usuarios SET nombre = ? WHERE id = ?',
+        nuevoNombre, id
+      );
+    }
+  }
+
+  // DELETE - Eliminar usuario
+  async delete(id) {
+    if (Platform.OS === 'web') {
+      let usuarios = await this.getAll();
+      // Filtramos para quitar el ID que queremos borrar
+      usuarios = usuarios.filter(u => u.id !== id);
+      localStorage.setItem(this.storageKey, JSON.stringify(usuarios));
+    } else {
+      // Usamos DELETE de SQL
+      await this.db.runAsync(
+        'DELETE FROM usuarios WHERE id = ?',
+        id
+      );
     }
   }
 }

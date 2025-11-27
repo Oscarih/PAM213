@@ -6,10 +6,10 @@ export class UsuarioController {
     this.listeners = [];
   }
 
-  // Inicializar el controlador con el Service
   async initialize() {
     await DatabaseService.initialize();
   }
+
   async obtenerUsuarios() {
     try {
       const data = await DatabaseService.getAll();
@@ -19,18 +19,15 @@ export class UsuarioController {
       throw new Error('No se pudieron cargar los usuarios');
     }
   }
+
   async crearUsuario(nombre) {
     try {
-      // 1. Validar datos
       Usuario.validar(nombre);
 
-      // 2. Insertar en BD
       const nuevoUsuario = await DatabaseService.add(nombre.trim());
 
-      // 3. Notificar a los observadores
       this.notifyListeners();
 
-      // 4. Retornar usuario creado
       return new Usuario(
         nuevoUsuario.id,
         nuevoUsuario.nombre,
@@ -41,7 +38,30 @@ export class UsuarioController {
       throw error;
     }
   }
-  // Sistema de observadores para actualizar la vista automáticamente
+
+  // --- NUEVAS FUNCIONES AGREGADAS PARA PRÁCTICA 20 ---
+
+  async actualizarUsuario(id, nombre) {
+    try {
+      Usuario.validar(nombre);
+      await DatabaseService.update(id, nombre.trim());
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Error al actualizar:', error);
+      throw error;
+    }
+  }
+
+  async eliminarUsuario(id) {
+    try {
+      await DatabaseService.delete(id);
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      throw new Error('No se pudo eliminar el usuario');
+    }
+  }
+
   addListener(callback) {
     this.listeners.push(callback);
   }
